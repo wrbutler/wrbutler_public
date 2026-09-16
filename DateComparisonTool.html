@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Time Period Definitions — Interactive Reference</title>
+<style>
+  :root {
+    --primary: #077A9D;
+    --accent1: #FFAB00;
+    --accent2: #00A972;
+    --accent3: #FF3621;
+    --accent4: #8BCAE7;
+    --accent5: #AB4057;
+    --accent6: #99DDB4;
+    --accent7: #FCA4A1;
+    --neutral: #919191;
+    --accent8: #BF7080;
+    --bg: #f8f9fb;
+    --card-bg: #ffffff;
+    --text: #1e1e2f;
+    --text-muted: #6b7280;
+    --border: #e2e5ea;
+    --shadow: 0 2px 8px rgba(0,0,0,0.06);
+    --radius: 10px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 24px;
+  }
+
+  h1 { font-size: 28px; font-weight: 700; color: var(--primary); margin-bottom: 6px; }
+  .subtitle { color: var(--text-muted); font-size: 15px; margin-bottom: 28px; }
+
+  /* ── Tab Navigation ── */
+  .tab-bar {
+    display: flex; gap: 4px; margin-bottom: 24px;
+    border-bottom: 2px solid var(--border); padding-bottom: 0;
+  }
+  .tab-btn {
+    padding: 10px 20px; border: none; background: transparent;
+    font-size: 14px; font-weight: 600; color: var(--text-muted);
+    cursor: pointer; border-bottom: 3px solid transparent;
+    margin-bottom: -2px; transition: all 0.2s; border-radius: 6px 6px 0 0;
+  }
+  .tab-btn:hover { color: var(--primary); background: rgba(7,122,157,0.05); }
+  .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); background: rgba(7,122,157,0.07); }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* ── Filter Chips ── */
+  .filter-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+  .filter-chip {
+    padding: 6px 16px; border-radius: 20px; border: 1.5px solid var(--border);
+    background: var(--card-bg); font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: all 0.2s; color: var(--text-muted);
+  }
+  .filter-chip:hover { border-color: var(--primary); color: var(--primary); }
+  .filter-chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+  /* ── Cards ── */
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
+  .card {
+    background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow);
+    border-left: 4px solid var(--primary); padding: 20px; cursor: pointer;
+    transition: all 0.25s; position: relative; overflow: hidden;
+  }
+  .card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+  .card.expanded { grid-column: 1 / -1; }
+  .card .badge {
+    display: inline-block; padding: 2px 10px; border-radius: 12px;
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.5px; margin-bottom: 8px;
+  }
+  .badge-fixed { background: #e0f4fc; color: #077A9D; }
+  .badge-date { background: #fff3d6; color: #b8860b; }
+  .badge-calendar { background: #d4f5e6; color: #0a7c4a; }
+  .badge-partial { background: #ffe0de; color: #c0392b; }
+  .badge-rolling { background: #ede0f5; color: #7b2d8e; }
+  .card-title { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+  .card-def { font-size: 14px; color: var(--text-muted); margin-bottom: 10px; }
+  .card-detail { display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 13px; }
+  .card.expanded .card-detail { display: block; }
+  .detail-row { display: flex; gap: 8px; margin-bottom: 6px; }
+  .detail-label { font-weight: 600; color: var(--primary); min-width: 130px; flex-shrink: 0; }
+  .qualifier-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; background: #f0f0f0; font-size: 12px; margin: 2px; }
+  .expand-hint { font-size: 11px; color: var(--text-muted); margin-top: 6px; font-style: italic; }
+  .section-intro { font-size: 14px; color: var(--text-muted); margin-bottom: 16px; max-width: 700px; }
+  .comp-card { border-left-color: var(--accent1); }
+  .comp-type-card { border-left-color: var(--accent2); }
+
+  /* ── Builder + Timeline Combined ── */
+  .builder-container {
+    background: var(--card-bg); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 28px; margin-bottom: 24px;
+  }
+  .builder-header { font-size: 18px; font-weight: 700; color: var(--primary); margin-bottom: 4px; }
+  .builder-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
+
+  .builder-controls {
+    display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 24px;
+    align-items: flex-end;
+  }
+  .control-group { flex: 1; min-width: 200px; }
+  .control-group label {
+    display: block; font-size: 12px; font-weight: 600; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;
+  }
+  .step-num {
+    display: inline-flex; width: 20px; height: 20px; border-radius: 50%;
+    background: var(--primary); color: #fff; align-items: center;
+    justify-content: center; font-size: 11px; font-weight: 700; margin-right: 4px;
+  }
+  .control-group select {
+    width: 100%; padding: 10px 14px; border: 1.5px solid var(--border);
+    border-radius: 8px; font-size: 14px; background: #fff; color: var(--text);
+    cursor: pointer; transition: border-color 0.2s; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 12px center;
+  }
+  .control-group select:focus { outline: none; border-color: var(--primary); }
+
+  /* Token output */
+  .token-bar {
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    background: linear-gradient(135deg, #077A9D 0%, #0a9bc7 100%);
+    border-radius: var(--radius); padding: 16px 24px; margin-bottom: 24px; color: #fff;
+  }
+  .token-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.7; }
+  .token-value { font-size: 20px; font-weight: 700; }
+  .token-desc { font-size: 13px; opacity: 0.85; flex: 1; min-width: 200px; }
+
+  /* ── Timeline Canvas (SVG-based) ── */
+  .timeline-canvas {
+    background: #fafbfd; border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px; min-height: 260px;
+    position: relative; overflow-x: auto;
+  }
+  .timeline-canvas svg { width: 100%; overflow: visible; }
+  .empty-state {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 220px; color: var(--text-muted); font-size: 15px;
+    flex-direction: column; gap: 8px;
+  }
+  .empty-state .icon { font-size: 40px; opacity: 0.4; }
+
+  /* Legend */
+  .legend {
+    display: flex; gap: 24px; margin-top: 16px; flex-wrap: wrap;
+    padding-top: 12px; border-top: 1px solid var(--border);
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+  .legend-swatch {
+    width: 16px; height: 16px; border-radius: 4px; flex-shrink: 0;
+  }
+
+  /* Tooltip */
+  .tooltip {
+    position: fixed; background: #1e1e2f; color: #fff;
+    padding: 10px 14px; border-radius: 8px; font-size: 13px;
+    max-width: 340px; pointer-events: none; z-index: 1000;
+    display: none; box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    line-height: 1.5;
+  }
+
+  /* Callout box for explanation */
+  .callout {
+    background: #f0f7fa; border-left: 4px solid var(--primary);
+    border-radius: 0 8px 8px 0; padding: 14px 18px; margin-top: 16px;
+    font-size: 13px; color: var(--text); line-height: 1.6;
+  }
+  .callout strong { color: var(--primary); }
+  .callout .diff-highlight { background: #ffe0de; padding: 1px 6px; border-radius: 3px; font-weight: 600; }
+
+  @media (max-width: 768px) {
+    .card-grid { grid-template-columns: 1fr; }
+    .builder-controls { flex-direction: column; }
+    body { padding: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<h1>⏱ Time Period Definitions</h1>
+<p class="subtitle">Interactive reference for time intervals, comparison periods, and comparison types</p>
+
+<div class="tab-bar">
+  <button class="tab-btn active" data-tab="intervals">① Time Intervals</button>
+  <button class="tab-btn" data-tab="comparisons">② Comparison Periods</button>
+  <button class="tab-btn" data-tab="types">③ Comparison Types</button>
+  <button class="tab-btn" data-tab="explorer">🔧 Visual Explorer</button>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- PANEL 1: TIME INTERVALS                     -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="panel active" id="panel-intervals">
+  <p class="section-intro">What window is being measured? Click any card to expand its full definition, boundary rules, and required qualifiers.</p>
+  <div class="filter-bar" id="interval-filters">
+    <button class="filter-chip active" data-class="all">All</button>
+    <button class="filter-chip" data-class="Fixed grain">Fixed Grain</button>
+    <button class="filter-chip" data-class="Date period">Date Period</button>
+    <button class="filter-chip" data-class="Calendar period">Calendar Period</button>
+    <button class="filter-chip" data-class="Partial-to-date">Partial-to-Date</button>
+    <button class="filter-chip" data-class="Rolling complete window">Rolling Window</button>
+  </div>
+  <div class="card-grid" id="interval-cards"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- PANEL 2: COMPARISON PERIODS                 -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="panel" id="panel-comparisons">
+  <p class="section-intro">Where does the baseline sit? These define the reference window against which the measured interval is compared.</p>
+  <div class="card-grid" id="comparison-cards"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- PANEL 3: COMPARISON TYPES                   -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="panel" id="panel-types">
+  <p class="section-intro">How are the two windows aligned? This determines whether dates are matched literally or shifted for weekday alignment.</p>
+  <div class="card-grid" id="type-cards"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- PANEL 4: VISUAL EXPLORER (combined)         -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="panel" id="panel-explorer">
+
+  <div class="builder-container">
+    <div class="builder-header">Visual Comparison Explorer</div>
+    <div class="builder-sub">Pick a time interval and comparison period, then see how the two comparison types align differently on the timeline.</div>
+
+    <div class="builder-controls">
+      <div class="control-group">
+        <label><span class="step-num">1</span> Time Interval</label>
+        <select id="sel-interval">
+          <option value="">— Select a time interval —</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label><span class="step-num">2</span> Comparison Period</label>
+        <select id="sel-comparison">
+          <option value="">— Select a comparison period —</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Token output -->
+    <div class="token-bar" id="token-bar" style="display:none;">
+      <div>
+        <div class="token-label">Output Token</div>
+        <div class="token-value" id="token-value"></div>
+      </div>
+      <div class="token-desc" id="token-desc"></div>
+    </div>
+
+    <!-- Timeline visualization -->
+    <div class="timeline-canvas" id="timeline-canvas">
+      <div class="empty-state">
+        <div class="icon">📊</div>
+        <div>Select a time interval and comparison period above to see the timeline</div>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="legend" id="legend" style="display:none;">
+      <div class="legend-item"><div class="legend-swatch" style="background:#077A9D;"></div> Current Period</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#FFAB00;"></div> Date vs. Date Baseline</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#00A972;"></div> Day-of-Week Aligned Baseline</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:repeating-linear-gradient(45deg,#00A972,#00A972 2px,transparent 2px,transparent 6px);"></div> Shift Difference (when types diverge)</div>
+    </div>
+
+    <!-- Explanation callout -->
+    <div class="callout" id="callout" style="display:none;"></div>
+  </div>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+// ═══════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════
+const intervals = [
+  { name: "Quarter Hour", cls: "Fixed grain", def: "One complete quarter-hour slot.", boundary: "Index 1: :00–:14 · Index 2: :15–:29 · Index 3: :30–:44 · Index 4: :45–:59", qualifier: "Current or Selected", color: "#077A9D" },
+  { name: "Half Hour", cls: "Fixed grain", def: "One complete half-hour slot.", boundary: "Index 1: :00–:29 · Index 2: :30–:59", qualifier: "", color: "#077A9D" },
+  { name: "Hour", cls: "Fixed grain", def: "One complete clock hour. (Confirm: always starts at top of hour?)", boundary: "Each hour spans 60 minutes (e.g., hour 0 = 00:00 to 00:59). Current view uses last completed hour.", qualifier: "Current or Selected", color: "#077A9D" },
+  { name: "Dayparts", cls: "Fixed grain", def: "Defined in Atlan glossary. Segments of the business day aligned to operational patterns.", boundary: "See Atlan glossary for exact boundaries.", qualifier: "", color: "#077A9D" },
+  { name: "Calendar Day", cls: "Date period", def: "One calendar date.", boundary: "12:00 AM – 11:59 PM", qualifier: "", color: "#FFAB00" },
+  { name: "Business Day", cls: "Date period", def: "One business day aligned to how sales are attributed to dayparts.", boundary: "5:00:00 AM – 4:59:59 AM next calendar day (captures 'late night' orders).", qualifier: "Current or Selected; Complete or To Date", color: "#FFAB00" },
+  { name: "Week", cls: "Calendar period", def: "One complete seven-day week beginning on Sunday.", boundary: "Sunday start.", qualifier: "Current or Selected; Complete", color: "#00A972" },
+  { name: "Month", cls: "Calendar period", def: "One complete 28-day month. (Optional: calendar month starting on the 1st.)", boundary: "28-day retail basis (or Gregorian calendar month).", qualifier: "Current or Selected; Complete", color: "#00A972" },
+  { name: "Year", cls: "Calendar period", def: "One complete 364-day year. (Optional: calendar year starting Jan 1.)", boundary: "364-day retail basis (or Gregorian calendar year).", qualifier: "Current or Selected; Complete", color: "#00A972" },
+  { name: "WTD", cls: "Partial-to-date", def: "Elapsed portion of the current calendar week.", boundary: "Week starts on Sunday through most recently completed data grain.", qualifier: "Current; To Date", color: "#FF3621" },
+  { name: "MTD", cls: "Partial-to-date", def: "Elapsed portion of the current calendar month.", boundary: "Month starts on the 1st through most recently completed data grain.", qualifier: "Current; To Date", color: "#FF3621" },
+  { name: "YTD", cls: "Partial-to-date", def: "Elapsed portion of the current calendar year.", boundary: "Year starts on January 1 through most recently completed data grain.", qualifier: "Current; To Date", color: "#FF3621" },
+  { name: "P3", cls: "Rolling complete window", def: "The latest three complete calendar months.", boundary: "Monthly boundaries are the first calendar day of the month. Excludes incomplete current month.", qualifier: "Rolling; Complete", color: "#AB4057" },
+  { name: "P6", cls: "Rolling complete window", def: "The latest six complete calendar months.", boundary: "Monthly boundaries are the first calendar day of the month. Excludes incomplete current month.", qualifier: "Rolling; Complete", color: "#AB4057" },
+  { name: "P12", cls: "Rolling complete window", def: "The latest twelve complete calendar months.", boundary: "Monthly boundaries are the first calendar day of the month. Excludes incomplete current month.", qualifier: "Rolling; Complete", color: "#AB4057" }
+];
+
+const comparisons = [
+  { name: "Previous Business Day", label: "DoD / Prior Day", def: "The immediately preceding comparable operating day.", rule: "Use prev_work_dt rather than blindly subtracting one date to allow for Sundays and holidays.", calendar: "Business calendar", shift: "prev_work_dt", retailShift: 1 },
+  { name: "Previous Week", label: "WoW", def: "The corresponding period beginning 7 days earlier.", rule: "Shift seven days or use week_ago_dt.", calendar: "Week basis", shift: 7, retailShift: 7 },
+  { name: "Previous Month", label: "MoM", def: "The corresponding period beginning 28 days earlier. (Optional: calendar month starting on the 1st.)", rule: "Use 28-day retail shift or month_ago_dt. Do not mix retail and Gregorian.", calendar: "Gregorian or retail", shift: "1 calendar month", retailShift: 28 },
+  { name: "Previous Year", label: "YoY", def: "The corresponding period 364 days earlier. (Optional: calendar year starting Jan 1.)", rule: "Use 364-day retail shift or year_ago_dt.", calendar: "Gregorian or retail", shift: "1 calendar year", retailShift: 364 },
+  { name: "Immediate Preceding Window", label: "Prior P-window", def: "The rolling window directly before the observed rolling window.", rule: "Shift by the full window length with no overlap.", calendar: "Complete-month basis", shift: "window length", retailShift: null }
+];
+
+const compTypes = [
+  { name: "Date vs. Date", basis: "Literal dates", def: "Pairs observed and baseline windows by their calendar positions.", useWhen: "Calendar reporting requires exact date or period boundaries.", control: "State calendar basis (Gregorian or retail)." },
+  { name: "Day-of-Week Aligned", basis: "Retail weekday", def: "Keeps weekday alignment through 7-, 28-, or 364-day shifts.", useWhen: "Retail behavior is more comparable by weekday than by calendar date.", control: "Declare retail offsets (7 / 28 / 364 days)." }
+];
+
+// ═══════════════════════════════════════════
+// TAB SWITCHING
+// ═══════════════════════════════════════════
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+// ═══════════════════════════════════════════
+// RENDER INTERVAL CARDS (Panel 1)
+// ═══════════════════════════════════════════
+function badgeClass(cls) {
+  if (cls.includes('Fixed')) return 'badge-fixed';
+  if (cls.includes('Date')) return 'badge-date';
+  if (cls.includes('Calendar') || cls.includes('reporting')) return 'badge-calendar';
+  if (cls.includes('Partial')) return 'badge-partial';
+  if (cls.includes('Rolling')) return 'badge-rolling';
+  return 'badge-fixed';
+}
+
+function renderIntervalCards(filter) {
+  const grid = document.getElementById('interval-cards');
+  grid.innerHTML = '';
+  intervals.filter(i => filter === 'all' || i.cls === filter).forEach(i => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.style.borderLeftColor = i.color;
+    card.innerHTML = `
+      <span class="badge ${badgeClass(i.cls)}">${i.cls}</span>
+      <div class="card-title">${i.name}</div>
+      <div class="card-def">${i.def}</div>
+      <div class="expand-hint">Click to expand ▾</div>
+      <div class="card-detail">
+        <div class="detail-row"><span class="detail-label">Boundary Rule</span><span class="detail-value">${i.boundary}</span></div>
+        ${i.qualifier ? `<div class="detail-row"><span class="detail-label">Qualifiers</span><span class="detail-value">${i.qualifier.split(';').map(q => `<span class="qualifier-tag">${q.trim()}</span>`).join(' ')}</span></div>` : ''}
+      </div>`;
+    card.addEventListener('click', () => {
+      card.classList.toggle('expanded');
+      card.querySelector('.expand-hint').textContent = card.classList.contains('expanded') ? 'Click to collapse ▴' : 'Click to expand ▾';
+    });
+    grid.appendChild(card);
+  });
+}
+renderIntervalCards('all');
+document.querySelectorAll('#interval-filters .filter-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('#interval-filters .filter-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    renderIntervalCards(chip.dataset.class);
+  });
+});
+
+// ═══════════════════════════════════════════
+// RENDER COMPARISON CARDS (Panel 2)
+// ═══════════════════════════════════════════
+const compGrid = document.getElementById('comparison-cards');
+comparisons.forEach(c => {
+  const card = document.createElement('div');
+  card.className = 'card comp-card';
+  card.innerHTML = `
+    <span class="badge badge-date">${c.label}</span>
+    <div class="card-title">${c.name}</div>
+    <div class="card-def">${c.def}</div>
+    <div class="expand-hint">Click to expand ▾</div>
+    <div class="card-detail">
+      <div class="detail-row"><span class="detail-label">Baseline Rule</span><span class="detail-value">${c.rule}</span></div>
+      <div class="detail-row"><span class="detail-label">Calendar</span><span class="detail-value"><span class="qualifier-tag">${c.calendar}</span></span></div>
+    </div>`;
+  card.addEventListener('click', () => {
+    card.classList.toggle('expanded');
+    card.querySelector('.expand-hint').textContent = card.classList.contains('expanded') ? 'Click to collapse ▴' : 'Click to expand ▾';
+  });
+  compGrid.appendChild(card);
+});
+
+// ═══════════════════════════════════════════
+// RENDER COMPARISON TYPE CARDS (Panel 3)
+// ═══════════════════════════════════════════
+const typeGrid = document.getElementById('type-cards');
+compTypes.forEach(t => {
+  const card = document.createElement('div');
+  card.className = 'card comp-type-card';
+  card.innerHTML = `
+    <span class="badge badge-calendar">${t.basis}</span>
+    <div class="card-title">${t.name}</div>
+    <div class="card-def">${t.def}</div>
+    <div class="expand-hint">Click to expand ▾</div>
+    <div class="card-detail">
+      <div class="detail-row"><span class="detail-label">Use When</span><span class="detail-value">${t.useWhen}</span></div>
+      <div class="detail-row"><span class="detail-label">Key Control</span><span class="detail-value">${t.control}</span></div>
+    </div>`;
+  card.addEventListener('click', () => {
+    card.classList.toggle('expanded');
+    card.querySelector('.expand-hint').textContent = card.classList.contains('expanded') ? 'Click to collapse ▴' : 'Click to expand ▾';
+  });
+  typeGrid.appendChild(card);
+});
+
+// ═══════════════════════════════════════════
+// VISUAL EXPLORER — Populate dropdowns
+// ═══════════════════════════════════════════
+const selInterval = document.getElementById('sel-interval');
+const selComparison = document.getElementById('sel-comparison');
+
+intervals.forEach(i => {
+  const opt = document.createElement('option');
+  opt.value = i.name; opt.textContent = `${i.name}  (${i.cls})`;
+  selInterval.appendChild(opt);
+});
+comparisons.forEach(c => {
+  const opt = document.createElement('option');
+  opt.value = c.name; opt.textContent = `${c.name}  (${c.label})`;
+  selComparison.appendChild(opt);
+});
+
+// ═══════════════════════════════════════════
+// VISUAL EXPLORER — Timeline rendering
+// ═══════════════════════════════════════════
+const tooltip = document.getElementById('tooltip');
+function showTooltip(e, html) {
+  tooltip.style.display = 'block';
+  tooltip.innerHTML = html;
+  tooltip.style.left = Math.min(e.clientX + 14, window.innerWidth - 360) + 'px';
+  tooltip.style.top = (e.clientY - 50) + 'px';
+}
+function hideTooltip() { tooltip.style.display = 'none'; }
+
+// Reference date: use "today" as Sep 16, 2026 (Wednesday)
+const TODAY = new Date(2026, 8, 16); // Sep 16, 2026
+
+function dayOfWeekName(d) {
+  return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
+}
+function fmtDate(d) {
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()} (${dayOfWeekName(d)})`;
+}
+function addDays(d, n) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
+function addMonths(d, n) { const r = new Date(d); r.setMonth(r.getMonth() + n); return r; }
+
+function getIntervalWindow(intName) {
+  // Returns { start, end, days, label } for the "current" period ending near TODAY
+  const t = TODAY;
+  switch(intName) {
+    case 'Quarter Hour': return { start: new Date(2026,8,16,14,0), end: new Date(2026,8,16,14,14), days: 0.01, label: '2:00–2:14 PM', unit: 'minutes' };
+    case 'Half Hour': return { start: new Date(2026,8,16,14,0), end: new Date(2026,8,16,14,29), days: 0.02, label: '2:00–2:29 PM', unit: 'minutes' };
+    case 'Hour': return { start: new Date(2026,8,16,13,0), end: new Date(2026,8,16,13,59), days: 0.04, label: '1:00–1:59 PM', unit: 'minutes' };
+    case 'Dayparts': return { start: new Date(2026,8,16,5,0), end: new Date(2026,8,16,23,59), days: 1, label: 'Sep 16 dayparts', unit: 'day' };
+    case 'Calendar Day': return { start: new Date(2026,8,16), end: new Date(2026,8,16), days: 1, label: 'Sep 16', unit: 'day' };
+    case 'Business Day': return { start: new Date(2026,8,16,5,0), end: new Date(2026,8,17,4,59), days: 1, label: 'Sep 16 (bus.)', unit: 'day' };
+    case 'Week': return { start: new Date(2026,8,6), end: new Date(2026,8,12), days: 7, label: 'Sep 6–12', unit: 'day' };
+    case 'Month': return { start: new Date(2026,7,23), end: new Date(2026,8,12), days: 28, label: 'Aug 23 – Sep 12 (28d)', unit: 'day' };
+    case 'Year': return { start: new Date(2025,8,18), end: new Date(2026,8,12), days: 364, label: 'Sep 18 \'25 – Sep 12 \'26 (364d)', unit: 'day' };
+    case 'WTD': {
+      // Current week Sun Sep 13 through today Sep 16 (Wed)
+      const sun = new Date(2026,8,13);
+      return { start: sun, end: t, days: 4, label: 'Sep 13–16 (WTD)', unit: 'day' };
+    }
+    case 'MTD': return { start: new Date(2026,8,1), end: t, days: 16, label: 'Sep 1–16 (MTD)', unit: 'day' };
+    case 'YTD': return { start: new Date(2026,0,1), end: t, days: 259, label: 'Jan 1 – Sep 16 (YTD)', unit: 'day' };
+    case 'P3': return { start: new Date(2026,5,1), end: new Date(2026,7,31), days: 92, label: 'Jun–Aug 2026 (P3)', unit: 'month' };
+    case 'P6': return { start: new Date(2026,2,1), end: new Date(2026,7,31), days: 184, label: 'Mar–Aug 2026 (P6)', unit: 'month' };
+    case 'P12': return { start: new Date(2025,8,1), end: new Date(2026,7,31), days: 365, label: 'Sep \'25–Aug \'26 (P12)', unit: 'month' };
+    default: return null;
+  }
+}
+
+function getComparisonWindows(intName, compName) {
+  // Returns { dateVsDate: {start, end, label, explanation}, dowAligned: {start, end, label, explanation}, diverges: bool }
+  const current = getIntervalWindow(intName);
+  if (!current) return null;
+
+  const comp = comparisons.find(c => c.name === compName);
+  if (!comp) return null;
+
+  let dvd = {}, dow = {};
+  let diverges = false;
+  let explanation = '';
+
+  if (compName === 'Previous Business Day') {
+    // DoD: date-vs-date = prior calendar day; dow-aligned = same weekday last week (7 days)
+    const calPrior = addDays(current.start, -1);
+    const dowPrior = addDays(current.start, -7);
+    dvd = { start: calPrior, end: calPrior, label: fmtDate(calPrior), days: 1 };
+    dow = { start: dowPrior, end: dowPrior, label: fmtDate(dowPrior), days: 1 };
+    diverges = true;
+    explanation = `<strong>Date vs. Date</strong> shifts to the prior calendar day: <strong>${fmtDate(calPrior)}</strong>. This lands on a ${dayOfWeekName(calPrior)}, which may have different traffic patterns than ${dayOfWeekName(current.start)}.<br><br><strong>Day-of-Week Aligned</strong> shifts 7 days back to <strong>${fmtDate(dowPrior)}</strong>, preserving the ${dayOfWeekName(dowPrior)} pattern — critical for retail where weekday mix drives sales.`;
+  }
+  else if (compName === 'Previous Week') {
+    // WoW: both shift 7 days — they are identical
+    const prior = addDays(current.start, -7);
+    const priorEnd = addDays(current.end, -7);
+    dvd = { start: prior, end: priorEnd, label: `${fmtDate(prior)} – ${fmtDate(priorEnd)}`, days: current.days };
+    dow = { start: prior, end: priorEnd, label: `${fmtDate(prior)} – ${fmtDate(priorEnd)}`, days: current.days };
+    diverges = false;
+    explanation = `<strong>Both comparison types produce the same result</strong> for week-over-week: a 7-day shift inherently preserves day-of-week alignment. Sunday maps to Sunday, Monday to Monday, etc.`;
+  }
+  else if (compName === 'Previous Month') {
+    // MoM: date-vs-date = prior calendar month; dow-aligned = 28-day shift
+    const calStart = addMonths(current.start, -1);
+    const calEnd = addMonths(current.end, -1);
+    const retStart = addDays(current.start, -28);
+    const retEnd = addDays(current.end, -28);
+    dvd = { start: calStart, end: calEnd, label: `${fmtDate(calStart)} – ${fmtDate(calEnd)}`, days: Math.round((calEnd - calStart) / 86400000) + 1 };
+    dow = { start: retStart, end: retEnd, label: `${fmtDate(retStart)} – ${fmtDate(retEnd)}`, days: current.days };
+    diverges = true;
+    explanation = `<strong>Date vs. Date</strong> shifts by one calendar month: <strong>${fmtDate(calStart)}</strong> to <strong>${fmtDate(calEnd)}</strong>. The baseline may have a different number of days (28–31) and weekday mix.<br><br><strong>Day-of-Week Aligned</strong> shifts exactly 28 days (4 weeks): <strong>${fmtDate(retStart)}</strong> to <strong>${fmtDate(retEnd)}</strong>. Every day in the baseline falls on the same weekday as its counterpart in the current period. This is the <span class="diff-highlight">retail standard</span>.`;
+  }
+  else if (compName === 'Previous Year') {
+    // YoY: date-vs-date = prior calendar year; dow-aligned = 364-day shift
+    const calStart = addMonths(current.start, -12);
+    const calEnd = addMonths(current.end, -12);
+    const retStart = addDays(current.start, -364);
+    const retEnd = addDays(current.end, -364);
+    dvd = { start: calStart, end: calEnd, label: `${fmtDate(calStart)} – ${fmtDate(calEnd)}`, days: Math.round((calEnd - calStart) / 86400000) + 1 };
+    dow = { start: retStart, end: retEnd, label: `${fmtDate(retStart)} – ${fmtDate(retEnd)}`, days: current.days };
+    diverges = calStart.getTime() !== retStart.getTime();
+    explanation = `<strong>Date vs. Date</strong> shifts by one calendar year: <strong>${fmtDate(calStart)}</strong> to <strong>${fmtDate(calEnd)}</strong>. The baseline lands on a ${dayOfWeekName(calStart)} — <em>not</em> the same weekday as the current period's ${dayOfWeekName(current.start)}.<br><br><strong>Day-of-Week Aligned</strong> shifts exactly 364 days (52 weeks): <strong>${fmtDate(retStart)}</strong> to <strong>${fmtDate(retEnd)}</strong>. This preserves weekday alignment: ${dayOfWeekName(retStart)} matches ${dayOfWeekName(current.start)}. The <span class="diff-highlight">${Math.abs(Math.round((calStart - retStart)/86400000))}-day gap</span> between the two baselines is where retail and calendar reporting diverge.`;
+  }
+  else if (compName === 'Immediate Preceding Window') {
+    // Prior P-window: shift by full window length
+    const priorStart = addDays(current.start, -current.days);
+    const priorEnd = addDays(current.start, -1);
+    dvd = { start: priorStart, end: priorEnd, label: `${fmtDate(priorStart)} – ${fmtDate(priorEnd)}`, days: current.days };
+    dow = { start: priorStart, end: priorEnd, label: `${fmtDate(priorStart)} – ${fmtDate(priorEnd)}`, days: current.days };
+    diverges = false;
+    explanation = `<strong>Both comparison types produce the same result</strong> for preceding-window comparisons: the baseline is the full window immediately before the current one, shifted by the exact window length with no overlap. For rolling windows (P3/P6/P12), this always uses complete-month boundaries.`;
+  }
+
+  return { current, dvd, dow, diverges, explanation, comp };
+}
+
+function renderTimeline() {
+  const intName = selInterval.value;
+  const compName = selComparison.value;
+  const canvas = document.getElementById('timeline-canvas');
+  const tokenBar = document.getElementById('token-bar');
+  const legend = document.getElementById('legend');
+  const callout = document.getElementById('callout');
+
+  if (!intName || !compName) {
+    canvas.innerHTML = '<div class="empty-state"><div class="icon">📊</div><div>Select a time interval and comparison period above to see the timeline</div></div>';
+    tokenBar.style.display = 'none';
+    legend.style.display = 'none';
+    callout.style.display = 'none';
+    return;
+  }
+
+  const result = getComparisonWindows(intName, compName);
+  if (!result) {
+    canvas.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><div>This combination is not visualizable</div></div>';
+    return;
+  }
+
+  const { current, dvd, dow, diverges, explanation, comp } = result;
+
+  // Token
+  tokenBar.style.display = 'flex';
+  const tokenVal = document.getElementById('token-value');
+  const tokenDesc = document.getElementById('token-desc');
+  tokenVal.textContent = `Current ${intName} vs ${comp.label}`;
+  tokenDesc.textContent = diverges
+    ? '⚡ The two comparison types produce DIFFERENT baselines — see the timeline below.'
+    : '✓ Both comparison types produce the same baseline for this combination.';
+
+  // Legend & callout
+  legend.style.display = 'flex';
+  callout.style.display = 'block';
+  callout.innerHTML = explanation;
+
+  // Build SVG timeline
+  // Find the full date range we need to show
+  const allDates = [current.start, current.end, dvd.start, dvd.end, dow.start, dow.end];
+  const minDate = new Date(Math.min(...allDates.map(d => d.getTime())));
+  const maxDate = new Date(Math.max(...allDates.map(d => d.getTime())));
+  // Add padding
+  const rangeDays = Math.max((maxDate - minDate) / 86400000, 1);
+  const padDays = Math.max(Math.ceil(rangeDays * 0.08), 2);
+  const viewStart = addDays(minDate, -padDays);
+  const viewEnd = addDays(maxDate, padDays);
+  const totalDays = Math.max((viewEnd - viewStart) / 86400000, 1);
+
+  function dateToX(d) { return ((d - viewStart) / 86400000 / totalDays) * 100; }
+  function dateRangeWidth(s, e) { return Math.max(((e - s) / 86400000 + 1) / totalDays * 100, 0.8); }
+
+  const svgW = 900;
+  const rowH = 52;
+  const barH = 32;
+  const topPad = 40;
+  const leftLabel = 180;
+  const chartW = svgW - leftLabel - 20;
+
+  const rows = diverges ? 3 : 2;
+  const svgH = topPad + rows * rowH + 30;
+
+  function xPos(d) { return leftLabel + (dateToX(d) / 100) * chartW; }
+  function barWidth(s, e) { return Math.max((dateRangeWidth(s, e) / 100) * chartW, 6); }
+
+  // Generate tick marks
+  let ticks = [];
+  const tickStep = rangeDays <= 7 ? 1 : rangeDays <= 60 ? 7 : rangeDays <= 200 ? 30 : 90;
+  let tickDate = new Date(viewStart);
+  tickDate.setDate(tickDate.getDate() + Math.ceil(padDays / tickStep) * tickStep);
+  while (tickDate <= viewEnd) {
+    ticks.push(new Date(tickDate));
+    tickDate = addDays(tickDate, tickStep);
+  }
+
+  let svg = `<svg viewBox="0 0 ${svgW} ${svgH}" xmlns="http://www.w3.org/2000/svg" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">`;
+
+  // Tick marks
+  ticks.forEach(t => {
+    const x = xPos(t);
+    if (x >= leftLabel && x <= svgW - 20) {
+      svg += `<line x1="${x}" y1="${topPad - 5}" x2="${x}" y2="${topPad + rows * rowH}" stroke="#e2e5ea" stroke-width="1" stroke-dasharray="4,3"/>`;
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      const label = tickStep >= 30 ? `${months[t.getMonth()]} ${t.getFullYear()}` : `${months[t.getMonth()]} ${t.getDate()}`;
+      svg += `<text x="${x}" y="${topPad - 12}" text-anchor="middle" font-size="10" fill="#6b7280">${label}</text>`;
+    }
+  });
+
+  // Row backgrounds
+  for (let r = 0; r < rows; r++) {
+    if (r % 2 === 1) {
+      svg += `<rect x="${leftLabel}" y="${topPad + r * rowH}" width="${chartW}" height="${rowH}" fill="#f5f6f8" rx="4"/>`;
+    }
+  }
+
+  // Helper: bar with tooltip area
+  function bar(x, w, y, h, color, label, tipText, opacity = 1, pattern = false) {
+    const id = 'bar-' + Math.random().toString(36).substr(2, 6);
+    let fill = color;
+    if (pattern) {
+      svg += `<defs><pattern id="pat-${id}" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)"><rect width="4" height="8" fill="${color}" opacity="0.6"/></pattern></defs>`;
+      fill = `url(#pat-${id})`;
+    }
+    svg += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="${fill}" opacity="${opacity}"
+      onmousemove="showTip(evt, '${tipText.replace(/'/g, "\\'")}')" onmouseleave="hideTip()"/>`;
+    // Label inside bar if wide enough
+    if (w > 50) {
+      svg += `<text x="${x + w/2}" y="${y + h/2 + 4}" text-anchor="middle" font-size="11" font-weight="600" fill="#fff" pointer-events="none">${label}</text>`;
+    }
+  }
+
+  // Row 0: Current period
+  const r0y = topPad + 10;
+  svg += `<text x="${leftLabel - 10}" y="${r0y + barH/2 + 4}" text-anchor="end" font-size="13" font-weight="600" fill="#1e1e2f">Current Period</text>`;
+  bar(xPos(current.start), barWidth(current.start, current.end), r0y, barH, '#077A9D', current.label, `Current: ${current.label}`);
+
+  // Row 1: Date vs. Date baseline
+  const r1y = topPad + rowH + 10;
+  svg += `<text x="${leftLabel - 10}" y="${r1y + barH/2 + 4}" text-anchor="end" font-size="13" font-weight="600" fill="#b8860b">Date vs. Date</text>`;
+  bar(xPos(dvd.start), barWidth(dvd.start, dvd.end), r1y, barH, '#FFAB00', dvd.label.length < 30 ? dvd.label : 'Calendar baseline', `Date vs. Date: ${dvd.label}`);
+
+  if (diverges) {
+    // Row 2: Day-of-week aligned baseline
+    const r2y = topPad + 2 * rowH + 10;
+    svg += `<text x="${leftLabel - 10}" y="${r2y + barH/2 + 4}" text-anchor="end" font-size="13" font-weight="600" fill="#0a7c4a">DoW Aligned</text>`;
+    bar(xPos(dow.start), barWidth(dow.start, dow.end), r2y, barH, '#00A972', dow.label.length < 30 ? dow.label : 'Retail baseline', `Day-of-Week Aligned: ${dow.label}`);
+
+    // Draw difference bracket if the two baselines are different
+    if (dvd.start.getTime() !== dow.start.getTime()) {
+      const diffStart = new Date(Math.min(dvd.start, dow.start));
+      const diffEnd = new Date(Math.max(dvd.start, dow.start));
+      const diffDays = Math.abs(Math.round((dvd.start - dow.start) / 86400000));
+      const dx = xPos(diffStart);
+      const dw = Math.max(xPos(diffEnd) - dx, 2);
+      // Highlight zone spanning rows 1-2
+      svg += `<rect x="${dx}" y="${r1y - 4}" width="${dw}" height="${r2y + barH - r1y + 8}" rx="4" fill="#FF3621" opacity="0.08" stroke="#FF3621" stroke-width="1.5" stroke-dasharray="4,3"/>`;
+      svg += `<text x="${dx + dw/2}" y="${r2y + barH + 18}" text-anchor="middle" font-size="11" font-weight="700" fill="#FF3621">↕ ${diffDays}-day gap</text>`;
+    }
+  } else {
+    // Show "identical" indicator
+    svg += `<text x="${xPos(dvd.start) + barWidth(dvd.start, dvd.end)/2}" y="${r1y + barH + 16}" text-anchor="middle" font-size="11" fill="#00A972" font-weight="600">✓ Day-of-Week Aligned produces the same baseline</text>`;
+  }
+
+  svg += '</svg>';
+
+  canvas.innerHTML = svg;
+
+  // Inject tooltip handlers into window scope
+  window.showTip = function(evt, text) {
+    const tip = document.getElementById('tooltip');
+    tip.style.display = 'block';
+    tip.innerHTML = text;
+    tip.style.left = Math.min(evt.clientX + 14, window.innerWidth - 360) + 'px';
+    tip.style.top = (evt.clientY - 50) + 'px';
+  };
+  window.hideTip = function() { document.getElementById('tooltip').style.display = 'none'; };
+}
+
+selInterval.addEventListener('change', renderTimeline);
+selComparison.addEventListener('change', renderTimeline);
+</script>
+</body>
+</html>
